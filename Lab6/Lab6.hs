@@ -83,7 +83,10 @@ other blocks, you should name the first block "^".
 
 
 predecessors :: Cfg -> [(String, [String])]
-predecessors = error "unimplemented"
+predecessors = error "unimplemented" --pattern match on terminators
+-- O(n) comlpex fold C implementation
+-- O(n^2) nested maps
+
 
 {-------------------------------------------------------------------------------
 
@@ -109,3 +112,6 @@ NOTE: The first block in a Cfg is still not named; keep calling it "^".
 
 useDefs :: Cfg -> [(String, ([String], [String]))]
 useDefs = error "unimplemented"
+
+--use stack overflow possibly to eliminate duplicates
+--nested where are my friend helper func for helper funcs
