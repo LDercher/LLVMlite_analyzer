@@ -83,7 +83,11 @@ other blocks, you should name the first block "^".
 
 
 predecessors :: Cfg -> [(String, [String])]
-predecessors = error "unimplemented" --pattern match on terminators
+predecessors head x:xs = [("^")]
+predecessors tail x:xs = snd x : map snd xs
+
+
+--pattern match on terminators
 -- O(n) comlpex fold C implementation
 -- O(n^2) nested maps
 
