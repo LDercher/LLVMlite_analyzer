@@ -83,8 +83,16 @@ other blocks, you should name the first block "^".
 
 
 predecessors :: Cfg -> [(String, [String])]
-predecessors head x:xs = [("^")]
-predecessors tail x:xs = snd x : map snd xs
+predecessors (a,_) = [("^")]
+predecessors (_,b) = snd x : map snd xs
+
+--helper func given string and cfg finds all occurrances of string in terminators each block
+fintStr :: String -> Cfg -> [String]
+findStr (_,b) = map
+
+--helper function to find occurance of string in string block pair block
+findInBlock :: String -> (String,Block) -> []
+
 
 
 --pattern match on terminators
