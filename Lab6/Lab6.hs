@@ -85,6 +85,7 @@ other blocks, you should name the first block "^".
 
 predecessors :: Cfg -> [(String, [String])]
 predecessors (x,[(a,b)]) = map (predator (x,[(a,b)])) (parseStrFromCfg (x,[(a,b)]))
+predecessors (_,[]) = _
 
 parseStrFromCfg :: Cfg -> [String]
 parseStrFromCfg (_,[(a,b)]) = [a] 
@@ -92,8 +93,10 @@ parseStrFromCfg (_,[(a,b)]) = [a]
 predator :: Cfg -> String -> (String, [String]) 
 predator (_,[(a,b)]) s = strInStrBlock s [(a,b)]
 
+
+
 strInStrBlock :: String -> [(String,Block)] -> (String,[String])
-strInStrBlock s [(a,b)] = (s,fromJust (map (findInBlock s) [(a,b)]))
+strInStrBlock s [(a,b)] = (s, (map fromJust (map (findInBlock s) [(a,b)])))
 
 --helper func given string and cfg finds all occurrances of string in terminators each block
 --findStr :: String -> [Block] -> [Maybe String]
