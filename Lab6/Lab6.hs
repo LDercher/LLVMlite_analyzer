@@ -2,6 +2,7 @@ module Lab6 where
 
 import LL.Language
 import Data.List
+import Data.Maybe
 
 {-------------------------------------------------------------------------------
 
@@ -83,16 +84,26 @@ other blocks, you should name the first block "^".
 
 
 predecessors :: Cfg -> [(String, [String])]
-predecessors (a,_) = [("^")]
-predecessors (_,b) = snd x : map snd xs
+predecessors (x,[(a,b)]) = map (predator (x,[(a,b)])) (parseStrFromCfg (x,[(a,b)]))
+
+parseStrFromCfg :: Cfg -> [String]
+parseStrFromCfg (_,[(a,b)]) = [a] 
+
+predator :: Cfg -> String -> (String, [String]) 
+predator (_,[(a,b)]) s = strInStrBlock s [(a,b)]
+
+strInStrBlock :: String -> [(String,Block)] -> (String,[String])
+strInStrBlock s [(a,b)] = (s,fromJust (map (findInBlock s) [(a,b)]))
 
 --helper func given string and cfg finds all occurrances of string in terminators each block
-fintStr :: String -> Cfg -> [String]
-findStr (_,b) = map
+--findStr :: String -> [Block] -> [Maybe String]
+--findStr a b = map (findInBlock a) b
 
 --helper function to find occurance of string in string block pair block
-findInBlock :: String -> (String,Block) -> []
-
+findInBlock :: String -> (String,Block) -> Maybe String
+findInBlock s (n,(_,Ret (Named i) t)) = if (s == i) then Just n else Nothing
+findInBlock s (n,(_,Bra i)) = if (s == i) then Just n else Nothing
+findInBlock s (n,(_,CBr o x i)) = if ((s == i) || (s == x) ) then Just n else Nothing
 
 
 --pattern match on terminators
