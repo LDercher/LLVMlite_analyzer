@@ -84,27 +84,30 @@ other blocks, you should name the first block "^".
 
 
 predecessors :: Cfg -> [(String, [String])]
-predecessors (x,[(a,b)]) = map (predator (x,[(a,b)])) (parseStrFromCfg (x,[(a,b)]))
-predecessors (_,[]) = _
-
-parseStrFromCfg :: Cfg -> [String]
-parseStrFromCfg (_,[(a,b)]) = [a] 
-
-predator :: Cfg -> String -> (String, [String]) 
-predator (_,[(a,b)]) s = strInStrBlock s [(a,b)]
+predecessors (first, rest) = map predator blocks
+                where blocks = ("^", first) : rest
+                      predator (s, _) = (s, catMaybes (map (findInBlock s) blocks))
 
 
 
-strInStrBlock :: String -> [(String,Block)] -> (String,[String])
-strInStrBlock s [(a,b)] = (s, (map fromJust (map (findInBlock s) [(a,b)])))
 
+
+
+--parseStrFromCfg :: Cfg -> [String]
+--parseStrFromCfg (_,[(a,b)]) = [a] 
+
+--predator :: [(String, Block)] -> (String, Block) -> (String, [String])
+--parseStrFromCfg :: Cfg -> [String]
+--parseStrFromCfg (_,[(a,b)]) = [a] 
+
+--predator :: [(String, Block)] -> (String, Block) -> (String, [String])
 --helper func given string and cfg finds all occurrances of string in terminators each block
 --findStr :: String -> [Block] -> [Maybe String]
 --findStr a b = map (findInBlock a) b
 
 --helper function to find occurance of string in string block pair block
 findInBlock :: String -> (String,Block) -> Maybe String
-findInBlock s (n,(_,Ret (Named i) t)) = if (s == i) then Just n else Nothing
+findInBlock s (n,(_,Ret _ t)) = Nothing
 findInBlock s (n,(_,Bra i)) = if (s == i) then Just n else Nothing
 findInBlock s (n,(_,CBr o x i)) = if ((s == i) || (s == x) ) then Just n else Nothing
 
@@ -137,7 +140,10 @@ NOTE: The first block in a Cfg is still not named; keep calling it "^".
 -------------------------------------------------------------------------------}
 
 useDefs :: Cfg -> [(String, ([String], [String]))]
-useDefs = error "unimplemented"
+useDefs (first, rest) = []
+
+findUsesInBlock :: Block -> [String]
+
 
 --use stack overflow possibly to eliminate duplicates
 --nested where are my friend helper func for helper funcs
