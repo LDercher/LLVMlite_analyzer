@@ -140,25 +140,45 @@ NOTE: The first block in a Cfg is still not named; keep calling it "^".
 -------------------------------------------------------------------------------}
 
 useDefs :: Cfg -> [(String, ([String], [String]))]
-useDefs (first, rest) = []
+useDefs (first, rest) = map (useDefsHelper blocks) blocks
+                          where blocks = ("^",first) : rest
 
-findUsesInInst :: Instruction -> [String]
-findUsesInInst Bin String Operator Type Uid s Uid t = [s] ++ [t] 
-findUsesInInst Alloca String Type = []                        
-findUsesInInst Load String Type Uid s = [s]               
-findUsesInInst Store Type Uid s Uid t = [s] ++ [t]               
-findUsesInInst Icmp String Relation Type Uid s Uid t = [s] ++ [t]
-findUsesInInst Call String Type String [(Type, Uid s)] = [s]
-findUsesInInst Bitcast String Type Uid s Type  = [s]         
-findUsesInInst Gep String Type Uid s [Uid t] = [s] ++ [t]        
+useDefsHelper :: [(String, Block)] -> (String, Block) -> (String,([String],[String]))
+useDefsHelper blocks (n, (insts, term)) = (n,(filterUses, defs))
+                    where defs = concat (map getDefs insts)
+                          uses = concat (map op2Str (concat (map getUses insts) ++ getTermUses term))
+                          filterUses = nub (filter (\n' -> notElem n' defs) uses)
 
+getDefs :: Instruction -> [String]
+getDefs (Bin def _ _ _ _ ) = [def]
+getDefs (Alloca def _ ) = [def]
+getDefs (Load def _ _ ) = [def]
+getDefs (Store _ _ _ ) = []
+getDefs (Icmp def _ _ _ _ ) = [def]
+getDefs (Call def _ _ [(_, _)]) = [def]
+getDefs (Bitcast def _ _ _ ) = [def]
+getDefs (Gep def _ _ [_]) = [def]
 
-findUsesInInst (_ _ Uid s) = [s]
-findUsesInInst (_ Uid s Uid t) = [s] ++ [t]
-findUsesInInst (_ Uid s _) = [s]
---findDefsInInsts :: [Instruction] -> [String]
- 
+getUses :: Instruction -> [Operand]
+getUses (Bin _ _ _ op1 op2) = [op1,op2]
+getUses (Alloca _ _ ) = []
+getUses (Load _ _ op) = [op]
+getUses (Store _ op1 op2) = [op1, op2]
+getUses (Icmp _ _ _ op1 op2) = [op1, op2]
+getUses (Call _ _ _ ops ) = map snd ops
+getUses (Bitcast _ _ op _ ) = [op]
+getUses (Gep _ _ op1 ops) = op1 : ops
 
+getTermUses :: Terminator -> [Operand]
+getTermUses (Ret _ (Just op)) = [op]
+getTermUses (Ret _ (Nothing)) = []
+getTermUses (Bra _) = []
+getTermUses (CBr op _ _ ) = [op]
+
+op2Str :: Operand -> [String]
+op2Str (Const _) = []
+op2Str (Gid _) = []
+op2Str (Uid s) = [s]
 
 --use stack overflow possibly to eliminate duplicates
 --nested where are my friend helper func for helper funcs
