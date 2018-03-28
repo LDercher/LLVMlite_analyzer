@@ -1,3 +1,9 @@
+{--
+author: Luke Dercher
+student id: l446d901
+class: EECS 665
+--}
+
 module Lab6 where
 
 import LL.Language
@@ -89,33 +95,11 @@ predecessors (first, rest) = map predator blocks
                       predator (s, _) = (s, catMaybes (map (findInBlock s) blocks))
 
 
-
-
-
-
---parseStrFromCfg :: Cfg -> [String]
---parseStrFromCfg (_,[(a,b)]) = [a] 
-
---predator :: [(String, Block)] -> (String, Block) -> (String, [String])
---parseStrFromCfg :: Cfg -> [String]
---parseStrFromCfg (_,[(a,b)]) = [a] 
-
---predator :: [(String, Block)] -> (String, Block) -> (String, [String])
---helper func given string and cfg finds all occurrances of string in terminators each block
---findStr :: String -> [Block] -> [Maybe String]
---findStr a b = map (findInBlock a) b
-
 --helper function to find occurance of string in string block pair block
 findInBlock :: String -> (String,Block) -> Maybe String
 findInBlock s (n,(_,Ret _ t)) = Nothing
 findInBlock s (n,(_,Bra i)) = if (s == i) then Just n else Nothing
 findInBlock s (n,(_,CBr o x i)) = if ((s == i) || (s == x) ) then Just n else Nothing
-
-
---pattern match on terminators
--- O(n) comlpex fold C implementation
--- O(n^2) nested maps
-
 
 {-------------------------------------------------------------------------------
 
@@ -140,45 +124,47 @@ NOTE: The first block in a Cfg is still not named; keep calling it "^".
 -------------------------------------------------------------------------------}
 
 useDefs :: Cfg -> [(String, ([String], [String]))]
-useDefs (first, rest) = map (useDefsHelper blocks) blocks
+useDefs (first, rest) = map (useDefsHelper blocks) blocks --map helper onto Cfg
                           where blocks = ("^",first) : rest
 
 useDefsHelper :: [(String, Block)] -> (String, Block) -> (String,([String],[String]))
-useDefsHelper blocks (n, (insts, term)) = (n,(filterUses, defs))
-                    where defs = concat (map getDefs insts)
-                          uses = concat (map op2Str (concat (map getUses insts) ++ getTermUses term))
-                          filterUses = nub (filter (\n' -> notElem n' defs) uses)
+useDefsHelper blocks (n, (insts, term)) = (n,(filterUses, defs)) -- for block n gather uses and defs list
+                    where defs = concat (map filterDefs insts) --gather all defs
+                          uses = concat (map filterUidStr (concat (map filterUses insts) ++ filterTermUses term)) --gather all uses
+                          filterUses = nub (filter (\n' -> notElem n' defs) uses) --remove uses already in defs
 
-getDefs :: Instruction -> [String]
-getDefs (Bin def _ _ _ _ ) = [def]
-getDefs (Alloca def _ ) = [def]
-getDefs (Load def _ _ ) = [def]
-getDefs (Store _ _ _ ) = []
-getDefs (Icmp def _ _ _ _ ) = [def]
-getDefs (Call def _ _ [(_, _)]) = [def]
-getDefs (Bitcast def _ _ _ ) = [def]
-getDefs (Gep def _ _ [_]) = [def]
+-- pull definitions out of insts
+filterDefs :: Instruction -> [String]
+filterDefs (Bin def _ _ _ _ ) = [def]
+filterDefs (Alloca def _ ) = [def]
+filterDefs (Load def _ _ ) = [def]
+filterDefs (Store _ _ _ ) = []
+filterDefs (Icmp def _ _ _ _ ) = [def]
+filterDefs (Call def _ _ [(_, _)]) = [def]
+filterDefs (Bitcast def _ _ _ ) = [def]
+filterDefs (Gep def _ _ [_]) = [def]
 
-getUses :: Instruction -> [Operand]
-getUses (Bin _ _ _ op1 op2) = [op1,op2]
-getUses (Alloca _ _ ) = []
-getUses (Load _ _ op) = [op]
-getUses (Store _ op1 op2) = [op1, op2]
-getUses (Icmp _ _ _ op1 op2) = [op1, op2]
-getUses (Call _ _ _ ops ) = map snd ops
-getUses (Bitcast _ _ op _ ) = [op]
-getUses (Gep _ _ op1 ops) = op1 : ops
+--pull uses out of insts
+filterUses :: Instruction -> [Operand]
+filterUses (Bin _ _ _ op1 op2) = [op1,op2]
+filterUses (Alloca _ _ ) = []
+filterUses (Load _ _ op) = [op]
+filterUses (Store _ op1 op2) = [op1, op2]
+filterUses (Icmp _ _ _ op1 op2) = [op1, op2]
+filterUses (Call _ _ _ ops ) = map snd ops
+filterUses (Bitcast _ _ op _ ) = [op]
+filterUses (Gep _ _ op1 ops) = op1 : ops
 
-getTermUses :: Terminator -> [Operand]
-getTermUses (Ret _ (Just op)) = [op]
-getTermUses (Ret _ (Nothing)) = []
-getTermUses (Bra _) = []
-getTermUses (CBr op _ _ ) = [op]
+--filter uses out of terminators
+filterTermUses :: Terminator -> [Operand]
+filterTermUses (Ret _ (Just op)) = [op]
+filterTermUses (Ret _ (Nothing)) = []
+filterTermUses (Bra _) = []
+filterTermUses (CBr op _ _ ) = [op]
 
-op2Str :: Operand -> [String]
-op2Str (Const _) = []
-op2Str (Gid _) = []
-op2Str (Uid s) = [s]
+--take only Operands of type Uid String
+filterUidStr :: Operand -> [String]
+filterUidStr (Const _) = []
+filterUidStr (Gid _) = []
+filterUidStr (Uid s) = [s]
 
---use stack overflow possibly to eliminate duplicates
---nested where are my friend helper func for helper funcs
