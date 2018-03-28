@@ -142,7 +142,22 @@ NOTE: The first block in a Cfg is still not named; keep calling it "^".
 useDefs :: Cfg -> [(String, ([String], [String]))]
 useDefs (first, rest) = []
 
-findUsesInBlock :: Block -> [String]
+findUsesInInst :: Instruction -> [String]
+findUsesInInst Bin String Operator Type Uid s Uid t = [s] ++ [t] 
+findUsesInInst Alloca String Type = []                        
+findUsesInInst Load String Type Uid s = [s]               
+findUsesInInst Store Type Uid s Uid t = [s] ++ [t]               
+findUsesInInst Icmp String Relation Type Uid s Uid t = [s] ++ [t]
+findUsesInInst Call String Type String [(Type, Uid s)] = [s]
+findUsesInInst Bitcast String Type Uid s Type  = [s]         
+findUsesInInst Gep String Type Uid s [Uid t] = [s] ++ [t]        
+
+
+findUsesInInst (_ _ Uid s) = [s]
+findUsesInInst (_ Uid s Uid t) = [s] ++ [t]
+findUsesInInst (_ Uid s _) = [s]
+--findDefsInInsts :: [Instruction] -> [String]
+ 
 
 
 --use stack overflow possibly to eliminate duplicates
